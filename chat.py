@@ -5,7 +5,7 @@ CHROMA_DIR = "./chroma_db"
 COLLECTION_NAME = "my_docs"
 EMBED_MODEL = "nomic-embed-text"
 CHAT_MODEL = "llama3.2:3b"
-TOP_K = 4
+TOP_K = 8
 
 
 def retrieve(query, top_k=TOP_K):
