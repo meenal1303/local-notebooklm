@@ -20,14 +20,20 @@ def retrieve(query, top_k=TOP_K):
         query_embeddings=[query_embedding],
         n_results=top_k,
     )
-    return results["documents"][0]  # list of chunk texts
+    return list(zip(results["documents"][0], results["metadatas"][0]))
 
 
-def build_prompt(question, chunks):
-    context = "\n\n---\n\n".join(chunks)
+def build_prompt(question, chunks_with_meta):
+    context_parts = []
+    for chunk_text, meta in chunks_with_meta:
+        source = meta.get("source", "unknown")
+        context_parts.append(f"[From {source}]\n{chunk_text}")
+    context = "\n\n---\n\n".join(context_parts)
+
     prompt = f"""You are a helpful assistant answering questions about a document.
 Use ONLY the context below to answer the question.
 If the context doesn't contain enough information to answer, say
+When information is used, mention which document it came from.
 "I couldn't find that in the document."
 Do not use any outside knowledge.
 
@@ -39,20 +45,14 @@ QUESTION: {question}
 ANSWER:"""
     return prompt
 
-
 def answer(question):
-    # 1. Retrieve relevant chunks
-    chunks = retrieve(question)
-
-    # 2. Build prompt
-    prompt = build_prompt(question, chunks)
-
-    # 3. Ask the LLM
+    chunks_with_meta = retrieve(question)
+    prompt = build_prompt(question, chunks_with_meta)
     response = ollama.chat(
         model=CHAT_MODEL,
         messages=[{"role": "user", "content": prompt}],
     )
-    return response["message"]["content"], chunks
+    return response["message"]["content"], chunks_with_meta
 
 
 if __name__ == "__main__":
