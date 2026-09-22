@@ -105,6 +105,42 @@ local-notebooklm/
 - [ ] Chat memory for multi-turn conversations
 - [ ] Better source citations (page numbers, highlighted spans)
 
+## 🗺️ What's next
+
+Ideas I explored during this build but chose not to ship in v1 — good candidates for future iterations.
+
+### Retrieval quality
+- **Query decomposition** — automatically split compound questions ("what does X do and where is Y based?") into standalone sub-queries, retrieve for each, then combine. Real RAG systems (LlamaIndex, Haystack) do this out of the box.
+- **Per-source retrieval balancing** — instead of top-K across everything, retrieve top-K from *each* document. Prevents large documents from drowning out smaller ones.
+- **Re-ranking** — after retrieval, re-score the top 20 chunks with a smarter cross-encoder model and keep the best 5. Meaningfully improves precision.
+- **Hybrid search** — combine semantic (embeddings) with keyword (BM25) search. Catches cases where the query mentions an exact term the embedder doesn't emphasize.
+
+### UX
+- **Streaming responses** — tokens appear as they're generated, ChatGPT-style. Ollama supports it natively with `stream=True`.
+- **Chat memory** — multi-turn conversations where "and the second one?" resolves against prior turns. Involves query rewriting with the LLM before retrieval.
+- **Better citations** — link each cited chunk back to the exact page and highlighted span in the source PDF.
+- **Per-document scoping** — a dropdown to chat with "just this one PDF" instead of the whole corpus.
+
+### Extraction
+- **GLM-OCR upgrade** — swap Tesseract for GLM-OCR (a modern vision-language model) for better handling of tables, math, and complex layouts. Especially valuable for research papers and financial docs.
+- **Layout-aware chunking** — chunk on section boundaries (headings, tables) rather than character counts. Preserves semantic structure.
+
+### Ops
+- **Evaluation harness** — a small test set of Q&A pairs with expected sources, and metrics like retrieval recall@k and answer faithfulness. This is what separates a toy from a real product.
+- **Bigger models** — try `qwen2.5:7b` or `llama3.1:8b` for higher-quality answers when latency is less critical.
+- **Streaming ingestion** — process very large PDFs page-by-page rather than loading the whole document into memory.
+
+## 🐛 Known limitations
+
+- **Compound queries** across multiple docs may under-retrieve smaller documents (mitigated by `TOP_K=8`, but not fully solved without query decomposition).
+- **Scanned PDFs with complex layouts** (tables, multi-column) may lose structure through Tesseract OCR.
+- **Small LLM (3B)** occasionally paraphrases loosely; larger models would answer more precisely.
+- **No chat memory** — each question is standalone; follow-ups won't resolve pronouns from previous turns.
+
+## 🙏 Acknowledgments
+
+Built as a hands-on RAG learning project. Thanks to the open-source teams behind Ollama, ChromaDB, LangChain, Streamlit, and PyMuPDF for making local AI genuinely accessible.
+
 ## 📝 License
 
 MIT
